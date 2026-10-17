@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { login } from '../api/auth';
 import { useAuth } from '../auth/AuthContext';
+import { API_URL } from '../config';
 import { colors, spacing, type } from '../ui/theme';
 
 export function LoginScreen({ navigation }) {
@@ -57,19 +58,27 @@ export function LoginScreen({ navigation }) {
 
     setBusy(true);
 
+    const startTime = Date.now();
+    const value = identifier.trim();
+    const isEmail = value.includes('@');
+    console.log(`[ElderCare Login] >>> START login via ${isEmail ? 'email' : 'phone'} identity -> ${API_URL}/auth/login`);
+
     try {
-      const value = identifier.trim();
-      const isEmail = value.includes('@');
       const payload = {
         ...(isEmail ? { email: value } : { phone: value }),
         password,
       };
 
       const response = await login(payload);
+      const elapsed = Date.now() - startTime;
+      console.log(`[ElderCare Login] <<< SUCCESS in ${elapsed}ms for role=${response?.user?.role}`);
       await signIn(response);
     } catch (err) {
+      const elapsed = Date.now() - startTime;
+      console.log(`[ElderCare Login] <<< FAILED in ${elapsed}ms: name=${err.name}, code=${err.code}, status=${err.status}, msg=${err.message}`);
+
       if (err.name === 'NetworkError') {
-        setError('Unable to connect to the server. Please check your connection and try again.');
+        setError(err.message || `Unable to reach ${API_URL}. Check device connection.`);
       } else if (err.code === 'invalid_credentials') {
         setError('Invalid email/phone or password.');
       } else if (err.code === 'account_disabled') {
@@ -85,6 +94,8 @@ export function LoginScreen({ navigation }) {
         });
         setFieldErrors(mappedErrs);
         setError('Please check your input and try again.');
+      } else if (err.status) {
+        setError(`Server error (${err.status} / ${err.code || 'error'}): ${err.message || 'Request failed'}`);
       } else {
         setError(err.message || 'An unexpected error occurred. Please try again.');
       }
@@ -108,6 +119,7 @@ export function LoginScreen({ navigation }) {
           <View style={styles.header}>
             <Text style={styles.title}>ElderCare</Text>
             <Text style={styles.subtitle}>Welcome back! Sign in to access your account.</Text>
+            <Text style={styles.apiIndicatorHeader}>API: {API_URL}</Text>
           </View>
 
           {/* Global Error Banner */}
@@ -203,6 +215,11 @@ export function LoginScreen({ navigation }) {
               <Text style={styles.registerLink}> Register</Text>
             </Pressable>
           </View>
+
+          {/* Active Backend Indicator */}
+          <View style={styles.apiIndicator}>
+            <Text style={styles.apiIndicatorText}>Backend: {API_URL}</Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -239,6 +256,17 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
+  },
+  apiIndicatorHeader: {
+    fontSize: type.small,
+    color: colors.primary,
+    fontWeight: '700',
+    marginTop: spacing.xs + 2,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
   errorBanner: {
     backgroundColor: '#FEE2E2',
@@ -342,5 +370,14 @@ const styles = StyleSheet.create({
     fontSize: type.body,
     fontWeight: '700',
     color: colors.primary,
+  },
+  apiIndicator: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    paddingTop: spacing.xs,
+  },
+  apiIndicatorText: {
+    fontSize: type.small - 1,
+    color: colors.textMuted,
   },
 });

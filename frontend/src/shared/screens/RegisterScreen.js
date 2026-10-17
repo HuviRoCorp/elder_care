@@ -119,7 +119,7 @@ export function RegisterScreen({ navigation }) {
       await signIn(response);
     } catch (err) {
       if (err.name === 'NetworkError') {
-        setError('Unable to connect to the server. Please check your connection and try again.');
+        setError(err.message || 'Unable to connect to the server. Please check your connection and try again.');
       } else if (err.code === 'account_exists') {
         setError('An account with this phone number or email already exists.');
       } else if (err.code === 'role_not_self_assignable') {

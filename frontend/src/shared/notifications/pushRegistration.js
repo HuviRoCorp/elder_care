@@ -22,6 +22,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { isRunningInExpoGo } from 'expo';
 
 import { apiRequest } from '../api/client';
 
@@ -42,15 +43,37 @@ export function getCachedPushToken() {
 }
 
 /**
+ * Checks whether remote push notifications are supported in the current runtime.
+ * Android remote push notifications via expo-notifications were removed from
+ * Expo Go in SDK 53+. Development builds (`expo-dev-client`) and standalone
+ * production builds retain full remote push support.
+ */
+export function isRemotePushSupported() {
+  const inExpoGo =
+    (typeof isRunningInExpoGo === 'function' && isRunningInExpoGo()) ||
+    Constants.appOwnership === 'expo' ||
+    Constants.executionEnvironment === 'storeClient';
+
+  return !inExpoGo;
+}
+
+/**
  * Requests permission if not already granted, gets this device's Expo push
  * token, and registers it with the backend. Returns the token, or null if
  * any step couldn't complete — permission denied, no EAS projectId configured
- * yet, or running on a simulator/emulator (push tokens don't exist there).
+ * yet, running on a simulator/emulator, or running inside Expo Go where remote
+ * push tokens are removed.
  * Never throws: registering for push is enrichment, not something that
  * should interrupt sign-in.
  */
 export async function registerForPushNotifications() {
   if (!Device.isDevice) return null;
+
+  if (!isRemotePushSupported()) {
+    // Gracefully skip remote push registration in Expo Go to avoid SDK 53+
+    // runtime errors while keeping local notifications and all other features working.
+    return null;
+  }
 
   const existing = await Notifications.getPermissionsAsync();
   let status = existing.status;
@@ -153,6 +176,11 @@ export async function unregisterForPushNotifications() {
  * @returns {{ remove: () => void }} Subscription cleanup handle
  */
 export function setupPushTokenRotationListener() {
+  if (!isRemotePushSupported()) {
+    // Return a valid cleanup object so callers unmount cleanly without errors.
+    return { remove: () => {} };
+  }
+
   const subscription = Notifications.addPushTokenListener(async (tokenEvent) => {
     try {
       const newToken = typeof tokenEvent === 'string' ? tokenEvent : tokenEvent?.data;
