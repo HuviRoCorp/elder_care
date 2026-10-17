@@ -326,6 +326,17 @@ async function run() {
   }
   console.log(`  ✓ Activity report submitted. ID: ${reportRes.data.report.id}`);
 
+  console.log('\n--- 15b. Caregiver Marks Booking as Completed ---');
+  const completeBookingRes = await request(`/caregiver/bookings/${bookingId}/status`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${tokens.caregiver}` },
+    body: { status: 'completed' },
+  });
+  if (completeBookingRes.status !== 200 || completeBookingRes.data.booking.status !== 'completed') {
+    throw new Error(`Completing booking failed: ${JSON.stringify(completeBookingRes.data)}`);
+  }
+  console.log('  ✓ Booking marked as completed.');
+
   console.log('\n--- 16. Family submits a 5-Star Review ---');
   const reviewRes = await request('/caregiver/reviews', {
     method: 'POST',

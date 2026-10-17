@@ -20,14 +20,14 @@ export function NotificationsBridge() {
   useEffect(() => {
     if (!isSignedIn) return;
 
-    registerSosNotificationCategory();
-    registerForPushNotifications();
+    registerSosNotificationCategory().catch(() => {});
+    registerForPushNotifications().catch(() => {});
     const sosSubscription = registerSosAcknowledgeListener();
     const rotationSubscription = setupPushTokenRotationListener();
 
     return () => {
-      sosSubscription?.remove();
-      rotationSubscription?.remove();
+      sosSubscription?.remove?.();
+      rotationSubscription?.remove?.();
     };
   }, [isSignedIn]);
 

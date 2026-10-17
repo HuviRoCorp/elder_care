@@ -70,6 +70,7 @@ module.exports = {
       },
     },
     plugins: [
+      'expo-status-bar',
       'expo-secure-store',
       [
         'expo-location',

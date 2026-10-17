@@ -36,9 +36,11 @@ export class ApiError extends Error {
 
 /** The request never reached the server, or took too long. */
 export class NetworkError extends Error {
-  constructor(message) {
+  constructor(message, details) {
     super(message);
     this.name = 'NetworkError';
+    this.message = message;
+    this.details = details || null;
   }
 }
 
@@ -61,6 +63,11 @@ export function configureApiClient(next) {
 // ---------------------------------------------------------------------------
 
 async function rawRequest(path, { method = 'GET', body, accessToken } = {}) {
+  const targetUrl = `${API_URL}${path}`;
+  const reqId = Math.random().toString(36).substring(2, 7);
+  const startTime = Date.now();
+  console.log(`[ElderCare API][${reqId}] >>> ${method} ${targetUrl}`);
+
   // Without a timeout a request to an unreachable backend hangs until the
   // platform gives up, which on a phone can be a minute of a spinner and no
   // explanation.
@@ -69,7 +76,7 @@ async function rawRequest(path, { method = 'GET', body, accessToken } = {}) {
 
   let response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(targetUrl, {
       method,
       headers: {
         Accept: 'application/json',
@@ -81,23 +88,36 @@ async function rawRequest(path, { method = 'GET', body, accessToken } = {}) {
       signal: controller.signal,
     });
   } catch (err) {
-    // fetch rejects for DNS failures, refused connections and aborts — never
-    // for an HTTP error status.
-    if (err.name === 'AbortError') {
-      throw new NetworkError(`The server did not answer within ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
+    const elapsed = Date.now() - startTime;
+    const isTimeout = err.name === 'AbortError';
+    console.log(
+      `[ElderCare API][${reqId}] <<< FAILED after ${elapsed}ms: ${err.name} - ${err.message}`
+    );
+    if (isTimeout) {
+      throw new NetworkError(
+        `Timeout after ${elapsed}ms: Server did not respond within ${REQUEST_TIMEOUT_MS / 1000}s (${targetUrl})`,
+        { isTimeout: true, elapsed, url: targetUrl }
+      );
     }
     throw new NetworkError(
-      `Could not reach the server at ${API_URL}. Check that the backend is running and that this device is on the same network.`
+      `Network failed after ${elapsed}ms: ${err.message || err.name} (${targetUrl})`,
+      { isTimeout: false, elapsed, url: targetUrl, error: err.message }
     );
   } finally {
     clearTimeout(timer);
   }
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[ElderCare API][${reqId}] <<< HTTP ${response.status} in ${elapsed}ms`);
 
   // 204 and friends have no body to parse.
   const text = await response.text();
   const payload = text ? safeParse(text) : null;
 
   if (!response.ok) {
+    console.log(
+      `[ElderCare API][${reqId}] <<< ERROR code=${payload?.code || 'none'}: ${payload?.error || response.statusText}`
+    );
     throw new ApiError(
       response.status,
       payload?.code ?? 'unknown_error',

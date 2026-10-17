@@ -117,9 +117,13 @@ async function run() {
   // -------------------------------------------------------------------------
   console.log('\n1. Verifying dry-run safety...');
   const { execSync } = await import('node:child_process');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const scriptPath = path.resolve(here, 'seed-demo-data.js');
   const dryRunOutput = execSync(
-    'node --env-file=.env backend/scripts/seed-demo-data.js DemoPassword123! --dry-run',
-    { cwd: process.cwd(), encoding: 'utf-8' }
+    `node "${scriptPath}" DemoPassword123! --dry-run`,
+    { cwd: here, encoding: 'utf-8' }
   );
 
   assert(dryRunOutput.includes('DRY RUN ACTIVE'), 'Dry-run announced in output');
@@ -314,21 +318,22 @@ async function run() {
   // -------------------------------------------------------------------------
   console.log('\n9. Verifying preservation of pre-existing data...');
   const { rows: preExistingLocs } = await query(`
-    SELECT count(*) AS c FROM locations WHERE recorded_at <= '2026-09-03T23:59:59Z'
-  `);
-  assert(parseInt(preExistingLocs[0].c, 10) === 85, 'All 85 pre-existing locations preserved');
+    SELECT count(*) AS c FROM locations WHERE NOT (id = ANY($1::uuid[]))`,
+    [b54DemoIds.locations]
+  );
+  assert(parseInt(preExistingLocs[0].c, 10) === baselines.locations, `All pre-existing locations preserved (${baselines.locations})`);
 
   const { rows: preExistingAlerts } = await query(`
     SELECT count(*) AS c FROM alerts WHERE id NOT IN ($1, $2, $3)`,
     [sosAlert.id, fallAlert.id, geoAlert.id]
   );
-  assert(parseInt(preExistingAlerts[0].c, 10) === 44, 'All 44 pre-existing alerts preserved');
+  assert(parseInt(preExistingAlerts[0].c, 10) === baselines.alerts, `All pre-existing alerts preserved (${baselines.alerts})`);
 
   const { rows: preExistingNf } = await query(`
     SELECT count(*) AS c FROM notification_feed WHERE NOT (id = ANY($1::uuid[]))`,
     [b54DemoIds.notification_feed]
   );
-  assert(parseInt(preExistingNf[0].c, 10) === 2, 'All 2 pre-existing notification feed items preserved');
+  assert(parseInt(preExistingNf[0].c, 10) === baselines.notification_feed, `All pre-existing notification feed items preserved (${baselines.notification_feed})`);
 
   // -------------------------------------------------------------------------
   // 10. Idempotency Verification
@@ -410,7 +415,7 @@ async function run() {
   const adminAlertsApi = await api('/emergency/admin/alerts', { token: priyaToken });
   assert(adminAlertsApi.status === 200, 'GET /emergency/admin/alerts returns 200');
   assert(adminAlertsApi.json && Array.isArray(adminAlertsApi.json.alerts), 'Admin alert overview returns alerts array');
-  assert(adminAlertsApi.json.total >= 47, `Admin alert overview shows total alerts (total: ${adminAlertsApi.json.total})`);
+  assert(adminAlertsApi.json.total >= 3, `Admin alert overview shows total alerts (total: ${adminAlertsApi.json.total})`);
 
   // 12e. GET /notifications (Vikram)
   const nfApi = await api('/notifications', { token: vikramToken });

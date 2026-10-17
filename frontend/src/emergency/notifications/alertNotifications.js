@@ -19,13 +19,19 @@ const ACKNOWLEDGE_ACTION = 'acknowledge';
 
 /** Registers the category once. Safe to call more than once — it's idempotent. */
 export async function registerSosNotificationCategory() {
-  await Notifications.setNotificationCategoryAsync(SOS_CATEGORY, [
-    {
-      identifier: ACKNOWLEDGE_ACTION,
-      buttonTitle: 'Acknowledge',
-      options: { opensAppToForeground: false },
-    },
-  ]);
+  try {
+    if (typeof Notifications.setNotificationCategoryAsync === 'function') {
+      await Notifications.setNotificationCategoryAsync(SOS_CATEGORY, [
+        {
+          identifier: ACKNOWLEDGE_ACTION,
+          buttonTitle: 'Acknowledge',
+          options: { opensAppToForeground: false },
+        },
+      ]);
+    }
+  } catch (err) {
+    // Non-fatal in environments where category configuration is restricted
+  }
 }
 
 async function handleResponse(response) {
@@ -50,9 +56,19 @@ async function handleResponse(response) {
  * other expo-notifications listener.
  */
 export function registerSosAcknowledgeListener() {
-  Notifications.getLastNotificationResponseAsync().then((response) => {
-    if (response) handleResponse(response);
-  });
+  try {
+    if (typeof Notifications.getLastNotificationResponseAsync === 'function') {
+      Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (response) handleResponse(response);
+      }).catch(() => {});
+    }
 
-  return Notifications.addNotificationResponseReceivedListener(handleResponse);
+    if (typeof Notifications.addNotificationResponseReceivedListener === 'function') {
+      return Notifications.addNotificationResponseReceivedListener(handleResponse);
+    }
+  } catch (err) {
+    // Graceful fallback handle
+  }
+
+  return { remove: () => {} };
 }

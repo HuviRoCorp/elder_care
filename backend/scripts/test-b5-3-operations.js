@@ -317,18 +317,18 @@ async function run() {
 
   assert(bookings.length >= 3, `Found at least 3 bookings (found ${bookings.length})`);
 
-  const rameshBooking = bookings.find((b) => b.elderly_name === 'Ramesh Patel');
+  const rameshBooking = bookings.find((b) => b.id === B53_DEMO_IDS.caregiver_bookings[0]);
   assert(rameshBooking && rameshBooking.caregiver_name === 'Sister Mary Joseph', 'Booking 1: Ramesh with Sister Mary');
   assert(rameshBooking.status === 'confirmed', 'Booking 1 status is confirmed');
   assert(Number(rameshBooking.agreed_rate) === 350, 'Booking 1 agreed rate is 350');
   assert(rameshBooking.booked_by_name === 'Vikram Patel', 'Booking 1 booked by Vikram Patel');
 
-  const saraswathiBooking = bookings.find((b) => b.elderly_name === 'Saraswathi Sundaram');
+  const saraswathiBooking = bookings.find((b) => b.id === B53_DEMO_IDS.caregiver_bookings[1]);
   assert(saraswathiBooking && saraswathiBooking.caregiver_name === 'Rajesh Kumar', 'Booking 2: Saraswathi with Rajesh Kumar');
   assert(saraswathiBooking.status === 'requested', 'Booking 2 status is requested (pending confirmation)');
   assert(Number(saraswathiBooking.agreed_rate) === 250, 'Booking 2 agreed rate is 250');
 
-  const balaBooking = bookings.find((b) => b.elderly_name.includes('Balachandran'));
+  const balaBooking = bookings.find((b) => b.id === B53_DEMO_IDS.caregiver_bookings[2]);
   assert(balaBooking && balaBooking.caregiver_name === 'Fatima Begum', 'Booking 3: Balachandran with Fatima Begum');
   assert(balaBooking.status === 'completed', 'Booking 3 status is completed');
   assert(Number(balaBooking.agreed_rate) === 400, 'Booking 3 agreed rate is 400');

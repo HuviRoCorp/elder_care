@@ -60,8 +60,11 @@ function resolveApiUrl() {
 
 export const API_URL = resolveApiUrl();
 
-/** How long a request may take before it is given up on, in milliseconds. */
-export const REQUEST_TIMEOUT_MS = 15000;
+// Log at startup so Metro console confirms the resolved URL.
+console.log('[ElderCare] API_URL =', API_URL);
+
+/** How long a request may take before it is given up on, in milliseconds (30s for Render free tier). */
+export const REQUEST_TIMEOUT_MS = 30000;
 
 /** Configurable 24/7 Emergency Response Center contact number. */
 export const EMERGENCY_RESPONSE_CENTER_PHONE =
