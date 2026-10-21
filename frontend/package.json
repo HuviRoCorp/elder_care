@@ -1,0 +1,45 @@
+{
+  "name": "eldercare-frontend",
+  "version": "1.0.0",
+  "description": "ElderCare mobile app — Expo/React Native shell for the emergency and caregiver modules",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "postinstall": "node scripts/patch-expo-notifications.js"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.17",
+    "@react-navigation/native": "^7.3.16",
+    "@react-navigation/native-stack": "^7.18.8",
+    "babel-preset-expo": "~57.0.0",
+    "expo": "^57.0.0",
+    "expo-battery": "~57.0.3",
+    "expo-build-properties": "~57.0.22",
+    "expo-constants": "~57.0.22",
+    "expo-dev-client": "~57.0.20",
+    "expo-device": "~57.0.2",
+    "expo-file-system": "~57.0.7",
+    "expo-location": "~57.0.21",
+    "expo-notifications": "~57.0.23",
+    "expo-secure-store": "~57.0.4",
+    "expo-sensors": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "expo-task-manager": "~57.0.21",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1"
+  },
+  "devDependencies": {
+    "@expo/ngrok": "^4.1.3",
+    "babel-preset-expo": "~57.0.0",
+    "expo-dev-client": "~57.0.20"
+  }
+}

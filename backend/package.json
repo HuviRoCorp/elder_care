@@ -1,0 +1,20 @@
+{
+  "name": "eldercare-backend",
+  "version": "1.0.0",
+  "description": "ElderCare backend API — shared server for the emergency and caregiver modules",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test:caregiver": "node scripts/test-caregiver-flow.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0"
+  }
+}
